@@ -1,18 +1,17 @@
-## Services Used
+Services Used
 - Amazon S3
 - AWS IAM (Bucket Policies)
 - Amazon Route 53
 
+ Steps Taken
 
-## Steps Taken
-
-### 1. Created an S3 Bucket
+1. Created an S3 Bucket
 - Created a bucket named `kobbycloud.com` in the Europe (Stockholm) region
 - Disabled "Block all public access" to allow public website hosting
 - Enabled **Static Website Hosting** under the Properties tab
 - Set `index.html` as the index document
 
-### 2. Uploaded the Website File
+2. Uploaded the Website File
 Created and uploaded a simple `index.html` file:
 ```html
 <html>
@@ -22,7 +21,7 @@ Created and uploaded a simple `index.html` file:
 </html>
 ```
 
-### 3. Attached a Bucket Policy
+3. Attached a Bucket Policy
 Added a bucket policy to allow public read access to all objects:
 ```json
 {
@@ -43,55 +42,38 @@ Added a bucket policy to allow public read access to all objects:
 - Created an **A record** with Alias enabled
 - Pointed the alias to the S3 website endpoint in Europe (Stockholm)
 
----
 
-## Problems I Hit
 
-### Problem 1 — Wrong Region Selected in Route 53
+Problems I Hit
+
+Problem 1 — Wrong Region Selected in Route 53
 Initially selected Africa (Cape Town) as the region for the S3 alias endpoint, but the bucket was in Europe (Stockholm). Route 53 was looking for the bucket in the wrong region entirely and couldn't find it.
 
-**Fix:** Changed the region in the A record to match the bucket's actual region (Europe/Stockholm).
+Fix:Changed the region in the A record to match the bucket's actual region (Europe/Stockholm).
 
-### Problem 2 — DNS_PROBE_FINISHED_NXDOMAIN Error
+Problem 2 — DNS_PROBE_FINISHED_NXDOMAIN Error
 After fixing the region, the site still wouldn't load. The browser returned a `DNS_PROBE_FINISHED_NXDOMAIN` error — meaning the internet had no idea `kobbycloud.com` existed.
 
-**Root cause:** The domain nameservers were never updated. Route 53 was configured correctly, but the domain registrar was still pointing to its own default nameservers, not AWS's.
+Root cause:The domain nameservers were never updated. Route 53 was configured correctly, but the domain registrar was still pointing to its own default nameservers, not AWS's.
 
-**Fix needed:** Copy the 4 NS records from Route 53 and update them in the domain registrar's DNS settings.
+Fix needed:** Copy the 4 NS records from Route 53 and update them in the domain registrar's DNS settings.
 
-### Problem 3 — No Domain Name
+Problem 3 — No Domain Name
 After all that troubleshooting, discovered that `kobbycloud.com` was never actually purchased. AWS does not provide free domain names automatically — a domain must be registered separately either through Route 53 (~$12/year for .com) or an external registrar.
 
-**Fix:** Used the S3 website endpoint URL directly, which worked perfectly.
+Fix: Used the S3 website endpoint URL directly, which worked perfectly.
+
+
+
+What I Learned
+
+- Unblocking public access ≠ granting public access.** Removing the block just lifts the guardrail. The bucket policy is what actually grants permission. AWS defaults to deny for everything unless explicitly allowed.
+- Route 53 alias records are region-specific.** The region selected in the alias must match the region where the S3 bucket actually lives.
+- DNS propagation takes time.** Even after nameservers are correctly updated, changes can take up to 48 hours to propagate globally.
+- A domain name must always be purchased separately.** Route 53 manages DNS routing but does not provide domain names for free.
+- IAM Principle of Least Privilege** — AWS denies everything by default. Permissions must be explicitly granted.
 
 ---
 
-## What I Learned
-
-- **Unblocking public access ≠ granting public access.** Removing the block just lifts the guardrail. The bucket policy is what actually grants permission. AWS defaults to deny for everything unless explicitly allowed.
-- **Route 53 alias records are region-specific.** The region selected in the alias must match the region where the S3 bucket actually lives.
-- **DNS propagation takes time.** Even after nameservers are correctly updated, changes can take up to 48 hours to propagate globally.
-- **A domain name must always be purchased separately.** Route 53 manages DNS routing but does not provide domain names for free.
-- **IAM Principle of Least Privilege** — AWS denies everything by default. Permissions must be explicitly granted.
-
----
-
-## End Result
-Static website successfully hosted and accessible via the S3 website endpoint:
-```
-http://kobbycloud.com.s3-website.eu-north-1.amazonaws.com
-```
-
-> *Full custom domain setup pending domain registration.*
-
----
-
-## Key AWS Concepts Covered
-| Concept | Service |
-|--------|---------|
-| Object storage | S3 |
-| Static website hosting | S3 |
-| Resource-based permissions | IAM / Bucket Policy |
-| DNS routing | Route 53 |
-| Alias records | Route 53 |
-| Least privilege principle | IAM |
+End Result
+Static website successfully hosted and accessible via the S3 website
