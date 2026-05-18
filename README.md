@@ -1,2 +1,3 @@
 # AWS-CLOUDPRACTITIONER-LABS
-This is where is upload my labs on aws cloud
+Hands-on labs completed as part of my AWS Cloud Practitioner 
+training with Amalitech.
